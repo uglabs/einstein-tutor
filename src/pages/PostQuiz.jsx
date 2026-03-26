@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { api } from '../lib/api'
 import { LESSONS } from '../data/lessons'
 
 function seededRand(seed) {
@@ -69,6 +70,8 @@ export default function PostQuiz() {
   const [current, setCurrent] = useState(0)
   const [answers, setAnswers] = useState([])
   const [selected, setSelected] = useState(null)
+  const [saving, setSaving] = useState(false)
+
   // Read question aloud whenever it changes
   useEffect(() => {
     if (lesson?.quiz[current]) speak(lesson.quiz[current].question)
@@ -87,8 +90,13 @@ export default function PostQuiz() {
     if (!isLast) {
       setAnswers(newAnswers); setSelected(null); setCurrent(c => c + 1); return
     }
-    sessionStorage.setItem(`post_${lessonNum}`, JSON.stringify({ answers: newAnswers, correct: lesson.quiz.map(q => q.correct) }))
-    navigate(`/lesson/${lessonNum}/results`)
+    setSaving(true)
+    try {
+      await api.saveQuiz(sessionId, false, newAnswers, lesson.quiz.map(q => q.correct))
+      navigate(`/lesson/${lessonNum}/results`)
+    } catch (err) {
+      console.error(err); setSaving(false)
+    }
   }
 
   return (
@@ -206,19 +214,19 @@ export default function PostQuiz() {
           {/* CTA */}
           <button
             onClick={handleNext}
-            disabled={selected === null}
+            disabled={selected === null || saving}
             className="mt-6 w-full rounded-2xl font-bold text-white transition-all disabled:opacity-30"
             style={{
               padding: '16px',
               fontSize: 17,
-              background: selected !== null ? meta.gradient : 'rgba(255,255,255,0.1)',
+              background: selected !== null && !saving ? meta.gradient : 'rgba(255,255,255,0.1)',
               fontFamily: 'Fredoka, sans-serif',
               letterSpacing: '0.3px',
-              boxShadow: selected !== null ? `0 6px 24px ${meta.glow}` : 'none',
+              boxShadow: selected !== null && !saving ? `0 6px 24px ${meta.glow}` : 'none',
               border: 'none',
             }}
           >
-            {isLast ? 'See my results →' : 'Next →'}
+            {saving ? 'Saving…' : isLast ? 'See my results →' : 'Next →'}
           </button>
         </div>
       </div>
