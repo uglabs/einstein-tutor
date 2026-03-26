@@ -1,3 +1,9 @@
 .vercel
 .env
 node_modules
+dist
+backend/einstein.db
+backend/__pycache__
+backend/.venv
+.DS_Store
+**/.DS_Store
