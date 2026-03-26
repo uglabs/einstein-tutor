@@ -345,17 +345,21 @@ ${lesson.prompt}`
         handleEndLessonRef.current?.()
       }
 
-      // Fallback B: 60s past scheduled injection time and injection never even fired — force end
-      lesson.injections.forEach(({ at, isClosing }) => {
+      // Fallback B: 60s past scheduled injection time and injection never fired — force inject now
+      lesson.injections.forEach(({ at, message, isClosing }) => {
         if (
           isClosing &&
           elapsedRef.current >= at + 60 &&
-          !autoEndRef.current &&
-          !autoEndTriggeredRef.current
+          !injectedRef.current.has(at) &&
+          currentStateRef.current !== 'listening' &&
+          currentStateRef.current !== 'userSpeaking'
         ) {
-          console.log(`[AUTOEND] Fallback B at T=${elapsedRef.current}s — injection never fired`)
-          autoEndTriggeredRef.current = true
-          handleEndLessonRef.current?.()
+          injectedRef.current.add(at)
+          console.log(`[INJECT] Fallback B at T=${elapsedRef.current}s — force injecting wrap-up`)
+          setWrappingUp(true)
+          setTimeout(() => managerRef.current?.sendText?.(message), 400)
+          autoEndRef.current = true
+          injectionFiredAtRef.current = elapsedRef.current
         }
       })
     }, 1000)
