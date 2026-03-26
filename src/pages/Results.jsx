@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { api } from '../lib/api'
 import { LESSONS } from '../data/lessons'
 
 function seededRand(seed) {
@@ -67,7 +66,18 @@ export default function Results() {
 
   useEffect(() => {
     if (!sessionId) { navigate('/dashboard'); return }
-    api.getResults(sessionId).then(setResults).catch(console.error).finally(() => setLoading(false))
+    const pre = JSON.parse(sessionStorage.getItem(`pre_${lessonNum}`) || 'null')
+    const post = JSON.parse(sessionStorage.getItem(`post_${lessonNum}`) || 'null')
+    if (pre && post) {
+      const preScore = pre.answers.reduce((acc, a, i) => acc + (a === pre.correct[i] ? 1 : 0), 0)
+      const postScore = post.answers.reduce((acc, a, i) => acc + (a === post.correct[i] ? 1 : 0), 0)
+      setResults({
+        pre: { score: preScore, total: pre.answers.length },
+        post: { score: postScore, total: post.answers.length },
+        session: null,
+      })
+    }
+    setLoading(false)
   }, [sessionId])
 
   if (!lesson) return null

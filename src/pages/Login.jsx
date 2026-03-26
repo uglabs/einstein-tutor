@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { api } from '../lib/api'
-import { storeUser, getStoredUser } from '../lib/user'
+import { storeUser, getStoredUser, hashToUuid } from '../lib/user'
 
 const ACCESS_CODE = import.meta.env.VITE_ACCESS_CODE || ''
 
@@ -76,17 +75,9 @@ export default function Login() {
       return
     }
 
-    setLoading(true)
-    setError('')
-    try {
-      const user = await api.findOrCreateUser(trimmed)
-      storeUser(user)
-      navigate('/dashboard')
-    } catch {
-      setError('Something went wrong. Please try again!')
-    } finally {
-      setLoading(false)
-    }
+    const user = { id: hashToUuid(trimmed), name: trimmed }
+    storeUser(user)
+    navigate('/dashboard')
   }
 
   return (

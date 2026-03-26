@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { api } from '../lib/api'
-import { getStoredUser } from '../lib/user'
 import { LESSONS } from '../data/lessons'
 
 function seededRand(seed) {
@@ -67,12 +65,10 @@ export default function PreQuiz() {
   const lesson = LESSONS[lessonNum - 1]
   const meta = LESSON_META[lessonNum - 1] || LESSON_META[0]
   const navigate = useNavigate()
-  const user = getStoredUser()
 
   const [current, setCurrent] = useState(0)
   const [answers, setAnswers] = useState([])
   const [selected, setSelected] = useState(null)
-  const [saving, setSaving] = useState(false)
 
   // Read question aloud whenever it changes
   useEffect(() => {
@@ -91,15 +87,10 @@ export default function PreQuiz() {
     if (!isLast) {
       setAnswers(newAnswers); setSelected(null); setCurrent(c => c + 1); return
     }
-    setSaving(true)
-    try {
-      const { session_id } = await api.startSession(user.id, lessonNum)
-      sessionStorage.setItem(`session_${lessonNum}`, session_id)
-      await api.saveQuiz(session_id, true, newAnswers, lesson.quiz.map(q => q.correct))
-      navigate(`/lesson/${lessonNum}/chat`)
-    } catch (err) {
-      console.error(err); setSaving(false)
-    }
+    const session_id = crypto.randomUUID()
+    sessionStorage.setItem(`session_${lessonNum}`, session_id)
+    sessionStorage.setItem(`pre_${lessonNum}`, JSON.stringify({ answers: newAnswers, correct: lesson.quiz.map(q => q.correct) }))
+    navigate(`/lesson/${lessonNum}/chat`)
   }
 
   return (
@@ -218,19 +209,19 @@ export default function PreQuiz() {
           {/* CTA */}
           <button
             onClick={handleNext}
-            disabled={selected === null || saving}
+            disabled={selected === null}
             className="mt-6 w-full rounded-2xl font-bold text-white transition-all disabled:opacity-30"
             style={{
               padding: '16px',
               fontSize: 17,
-              background: selected !== null && !saving ? meta.gradient : 'rgba(255,255,255,0.1)',
+              background: selected !== null ? meta.gradient : 'rgba(255,255,255,0.1)',
               fontFamily: 'Fredoka, sans-serif',
               letterSpacing: '0.3px',
-              boxShadow: selected !== null && !saving ? `0 6px 24px ${meta.glow}` : 'none',
+              boxShadow: selected !== null ? `0 6px 24px ${meta.glow}` : 'none',
               border: 'none',
             }}
           >
-            {saving ? 'Starting…' : isLast ? 'Start Lesson with Albert →' : 'Next →'}
+            {isLast ? 'Start Lesson with Albert →' : 'Next →'}
           </button>
         </div>
       </div>

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { api } from '../lib/api'
 import { getStoredUser, clearUser } from '../lib/user'
 import { LESSONS } from '../data/lessons'
 
@@ -227,11 +226,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.getProgress(user.id)
-      .then(setProgress)
-      .catch(console.error)
-      .finally(() => setLoading(false))
-  }, [user.id])
+    setLoading(false)
+  }, [])
 
   if (loading) {
     return (
@@ -246,9 +242,9 @@ export default function Dashboard() {
     )
   }
 
-  const lessonStatuses = progress?.lessons || LESSONS.map((l, i) => ({
+  const lessonStatuses = progress?.lessons || LESSONS.map((l) => ({
     lesson_number: l.id,
-    status: i === 0 ? 'available' : 'locked',
+    status: 'available',
   }))
 
   const completedCount = lessonStatuses.filter(l => l.status === 'complete').length
