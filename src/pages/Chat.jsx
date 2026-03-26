@@ -236,9 +236,9 @@ ${lesson.prompt}`
               albertBufferRef.current = []
             }
 
-            // Fire pending injection on processing_complete — mic is OFF, safest state
-            // Do NOT fire on 'listening' (mic is active → "provide either text or audio, not both" error)
-            if (state === 'processing_complete' && pendingInjectionRef.current) {
+            // Fire pending injection on processing_complete or waiting — mic is OFF, safe states
+            // Do NOT fire on 'listening' or 'userSpeaking' (mic active → "provide either text or audio" error)
+            if ((state === 'processing_complete' || state === 'waiting') && pendingInjectionRef.current) {
               const { message, isClosing } = pendingInjectionRef.current
               pendingInjectionRef.current = null
               console.log(`[INJECT] Firing wrap-up at T=${elapsedRef.current}s (state=processing_complete)`)
@@ -333,16 +333,31 @@ ${lesson.prompt}`
         }
       })
 
-      // Fallback hard-end: 30s after closing injection if idle detection didn't fire
+      // Fallback A: 30s after closing injection fired, SDK state never settled — force end
       if (
         autoEndRef.current &&
         !autoEndTriggeredRef.current &&
         injectionFiredAtRef.current !== null &&
         elapsedRef.current >= injectionFiredAtRef.current + 30
       ) {
+        console.log(`[AUTOEND] Fallback A at T=${elapsedRef.current}s`)
         autoEndTriggeredRef.current = true
         handleEndLessonRef.current?.()
       }
+
+      // Fallback B: 60s past scheduled injection time and injection never even fired — force end
+      lesson.injections.forEach(({ at, isClosing }) => {
+        if (
+          isClosing &&
+          elapsedRef.current >= at + 60 &&
+          !autoEndRef.current &&
+          !autoEndTriggeredRef.current
+        ) {
+          console.log(`[AUTOEND] Fallback B at T=${elapsedRef.current}s — injection never fired`)
+          autoEndTriggeredRef.current = true
+          handleEndLessonRef.current?.()
+        }
+      })
     }, 1000)
   }
 
