@@ -349,7 +349,7 @@ ${lesson.prompt}`
       lesson.injections.forEach(({ at, message, isClosing }) => {
         if (
           isClosing &&
-          elapsedRef.current >= at + 60 &&
+          elapsedRef.current >= at + 30 &&
           !injectedRef.current.has(at) &&
           currentStateRef.current !== 'listening' &&
           currentStateRef.current !== 'userSpeaking'

@@ -66,7 +66,7 @@ If the child goes off-topic, gently guide back: "That's interesting! But first, 
 
     injections: [
       {
-        at: 300,
+        at: 60,
         isClosing: true,
         message: '[SYSTEM: The lesson is ending now. Give a warm 2–3 sentence summary of what you and the child discovered together about gravity, celebrate their participation as a Junior Scientist, and say a warm goodbye like a true professor would. After you finish speaking, do not ask another question — let the conversation end naturally.]',
       },
@@ -150,7 +150,7 @@ Always ask the CHILD to perform actions. You are a voice character.
 
     injections: [
       {
-        at: 300,
+        at: 60,
         isClosing: true,
         message: '[SYSTEM: The lesson is ending now. Give a warm 2–3 sentence summary of what you and the child discovered together about light and speed, celebrate their participation as a Junior Scientist, and say a warm goodbye like a true professor would. After you finish speaking, do not ask another question — let the conversation end naturally.]',
       },
@@ -231,7 +231,7 @@ Always ask the CHILD to perform actions. You are a voice character.
 
     injections: [
       {
-        at: 300,
+        at: 60,
         isClosing: true,
         message: '[SYSTEM: The lesson is ending now. Give a warm 2–3 sentence summary of what you and the child discovered together about E=mc², celebrate their participation as a true Junior Scientist, and say a warm, memorable goodbye like the professor you are. After you finish speaking, do not ask another question — let the conversation end naturally.]',
       },
