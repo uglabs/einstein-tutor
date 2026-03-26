@@ -10,6 +10,12 @@ async function request(method, path, body) {
   return res.json();
 }
 
+export const adminApi = {
+  getUsers:      (key) => request('GET', `/admin/users?key=${encodeURIComponent(key)}`),
+  getSessions:   (key) => request('GET', `/admin/sessions?key=${encodeURIComponent(key)}`),
+  getTranscript: (key, sessionId) => request('GET', `/admin/sessions/${sessionId}/transcript?key=${encodeURIComponent(key)}`),
+}
+
 export const api = {
   findOrCreateUser: (name) => request('POST', '/users', { name }),
   getProgress: (userId) => request('GET', `/users/${userId}/progress`),

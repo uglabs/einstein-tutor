@@ -4,11 +4,12 @@ import sqlite3
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 DB_PATH = os.environ.get("DB_PATH", "einstein.db")
+ADMIN_KEY = os.environ.get("ADMIN_KEY", "einstein-admin-2026")
 
 app = FastAPI(title="Einstein Tutor API")
 
@@ -258,3 +259,59 @@ def get_results(session_id: str):
             (post["score"] - pre["score"]) if pre and post else None
         ),
     }
+
+
+# ── Admin endpoints ────────────────────────────────────────────────────────────
+
+def check_admin(key: str):
+    if key != ADMIN_KEY:
+        raise HTTPException(403, "Forbidden")
+
+
+@app.get("/admin/users")
+def admin_users(key: str = Query(...)):
+    check_admin(key)
+    with get_db() as conn:
+        rows = conn.execute("""
+            SELECT u.id, u.name, u.created_at,
+                   COUNT(DISTINCT s.id) as total_sessions,
+                   COUNT(DISTINCT CASE WHEN s.ended_at IS NOT NULL THEN s.id END) as completed_sessions,
+                   MAX(s.started_at) as last_active
+            FROM users u
+            LEFT JOIN sessions s ON s.user_id = u.id
+            GROUP BY u.id
+            ORDER BY u.created_at DESC
+        """).fetchall()
+    return [dict(r) for r in rows]
+
+
+@app.get("/admin/sessions")
+def admin_sessions(key: str = Query(...)):
+    check_admin(key)
+    with get_db() as conn:
+        rows = conn.execute("""
+            SELECT s.id, u.name as user_name, s.lesson_number,
+                   s.started_at, s.ended_at, s.duration_secs, s.message_count,
+                   pre.score as pre_score, pre.total as pre_total,
+                   post.score as post_score, post.total as post_total
+            FROM sessions s
+            JOIN users u ON u.id = s.user_id
+            LEFT JOIN (
+                SELECT session_id, score, total FROM quiz_attempts WHERE is_pre = 1
+            ) pre ON pre.session_id = s.id
+            LEFT JOIN (
+                SELECT session_id, score, total FROM quiz_attempts WHERE is_pre = 0
+            ) post ON post.session_id = s.id
+            ORDER BY s.started_at DESC
+        """).fetchall()
+    return [dict(r) for r in rows]
+
+
+@app.get("/admin/sessions/{session_id}/transcript")
+def admin_transcript(session_id: str, key: str = Query(...)):
+    check_admin(key)
+    with get_db() as conn:
+        row = conn.execute("SELECT transcript FROM sessions WHERE id = ?", (session_id,)).fetchone()
+        if not row:
+            raise HTTPException(404, "Session not found")
+    return {"transcript": json.loads(row["transcript"] or "[]")}
