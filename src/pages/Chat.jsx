@@ -312,7 +312,7 @@ ${lesson.prompt}`
       }
 
       lesson.injections.forEach(({ at, message, isClosing }) => {
-        if (elapsedRef.current === at && !injectedRef.current.has(at)) {
+        if (elapsedRef.current >= at && !injectedRef.current.has(at)) {
           injectedRef.current.add(at)
           if (isClosing) {
             setWrappingUp(true)
